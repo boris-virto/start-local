@@ -25,6 +25,8 @@ $modulesPath = "$platformRoot/modules"
 $assetsPath = "$platformRoot/wwwroot/assets"
 $cmsContentPath = "$platformRoot/wwwroot/cms-content"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+# an Invoke-WebRequest progress bar can stall the download on Linux pwsh (VCST-5302)
+$ProgressPreference = 'SilentlyContinue'
 
 function Exit-WithError([string]$message) {
     Write-Host "Error: $message" -ForegroundColor Red

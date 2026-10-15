@@ -18,7 +18,7 @@ Set up a complete Virto Commerce environment on your local machine with a single
 ## 💻 System Requirements
 - ~5 GB available disk space
 - [.NET SDK](https://dotnet.microsoft.com/download) (Required for `vc-build` installation)
-- [vc-build tool](https://github.com/VirtoCommerce/vc-build) (Install with: `dotnet tool install VirtoCommerce.GlobalTool -g`)
+- [vc-build tool](https://github.com/VirtoCommerce/vc-build) 3.1001.0 or later: the scripts pass `--target-architecture`, which earlier versions do not have (Install with: `dotnet tool install VirtoCommerce.GlobalTool -g`, update with: `dotnet tool update VirtoCommerce.GlobalTool -g`)
 - [Docker](https://www.docker.com/) (On Linux/MacOS, configure Docker to run without sudo)
 - Compatible with Windows (Requires PowerShell v.7)
 - For Linux/MacOS: Requires PowerShell v.7 ([Linux install](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-linux), [macOS install](https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-macos))
