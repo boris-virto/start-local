@@ -106,7 +106,8 @@ if ($vcSolutionVersion -eq "latest-stable") {
         --probing-path $backendDir/publish/app_data/modules `
         --discovery-path $backendDir/publish/modules `
         --root $backendDir/publish `
-        --skip-dependency-solving
+        --skip-dependency-solving `
+        --target-architecture X64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to build backend" -ForegroundColor Red
         Write-Host "Build command failed with exit code: $LASTEXITCODE" -ForegroundColor Red
@@ -121,7 +122,8 @@ elseif ($vcSolutionVersion -eq "edge") {
         --probing-path $backendDir/publish/app_data/modules `
         --discovery-path $backendDir/publish/modules `
         --root $backendDir/publish `
-        --skip-dependency-solving
+        --skip-dependency-solving `
+        --target-architecture X64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to build backend" -ForegroundColor Red
         Write-Host "Build command failed with exit code: $LASTEXITCODE" -ForegroundColor Red
@@ -136,7 +138,8 @@ else {
         --probing-path $backendDir/publish/app_data/modules `
         --discovery-path $backendDir/publish/modules `
         --root $backendDir/publish `
-        --skip-dependency-solving
+        --skip-dependency-solving `
+        --target-architecture X64
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Failed to build backend" -ForegroundColor Red
         Write-Host "Build command failed with exit code: $LASTEXITCODE" -ForegroundColor Red

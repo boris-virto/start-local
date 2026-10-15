@@ -3,7 +3,8 @@ param (
     [ValidateSet("postgres", "mysql", "sqlserver")]
     [string]$dbProvider = "",
     [string]$elasticsearchVersion = "8.18.0",
-    [string]$branch = "dev"
+    [string]$branch = "dev",
+    [int]$timeoutSec = 60
 )
 function New-Folder($folder) {
     try {
@@ -83,49 +84,59 @@ ES_MEM_LIMIT=1g
 Set-Content -Path $envFile -Value $envFileContent
 Write-Host "... .env file created" -ForegroundColor Green
 
-# download management scripts
-Write-Host "Downloading management scripts..." -ForegroundColor Yellow
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/build-VC-solution.ps1" -OutFile (Join-Path $targetFolder "build-VC-solution.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/start-VC-solution.ps1" -OutFile (Join-Path $targetFolder "start-VC-solution.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/stop-VC-solution.ps1" -OutFile (Join-Path $targetFolder "stop-VC-solution.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/remove-VC-solution.ps1" -OutFile (Join-Path $targetFolder "remove-VC-solution.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/update-VC-solution.ps1" -OutFile (Join-Path $targetFolder "update-VC-solution.ps1")
-Write-Host "... Management scripts downloaded" -ForegroundColor Green
+# Suppress the progress bar for all downloads: on Linux pwsh a rendered IWR
+# progress bar can hang/stall the request; on Windows/macOS it is merely cosmetic.
+# Restored in the matching finally so the user's session preference is untouched.
+$savedProgressPreference = $ProgressPreference
+$ProgressPreference = 'SilentlyContinue'
+try {
+    # download management scripts
+    Write-Host "Downloading management scripts..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/build-VC-solution.ps1" -OutFile (Join-Path $targetFolder "build-VC-solution.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/start-VC-solution.ps1" -OutFile (Join-Path $targetFolder "start-VC-solution.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/stop-VC-solution.ps1" -OutFile (Join-Path $targetFolder "stop-VC-solution.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/remove-VC-solution.ps1" -OutFile (Join-Path $targetFolder "remove-VC-solution.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/update-VC-solution.ps1" -OutFile (Join-Path $targetFolder "update-VC-solution.ps1") -TimeoutSec $timeoutSec
+    Write-Host "... Management scripts downloaded" -ForegroundColor Green
 
-# download scripts-helpers
-Write-Host "Downloading scripts-helpers..." -ForegroundColor Yellow
-$scriptsDir = Join-Path $targetFolder "scripts"
-$backendDir = Join-Path $targetFolder "backend"
-$frontendDir = Join-Path $targetFolder "frontend"
-New-Folder $scriptsDir
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/check-installed-modules.ps1" -OutFile (Join-Path $scriptsDir "check-installed-modules.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/setup-sampledata.ps1" -OutFile (Join-Path $scriptsDir "setup-sampledata.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/watch-url-up.ps1" -OutFile (Join-Path $scriptsDir "watch-url-up.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/docker-compose-helper.ps1" -OutFile (Join-Path $scriptsDir "docker-compose-helper.ps1")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/auth-helper.ps1" -OutFile (Join-Path $scriptsDir "auth-helper.ps1")
-Write-Host "... Scripts-helpers downloaded" -ForegroundColor Green
+    # download scripts-helpers
+    Write-Host "Downloading scripts-helpers..." -ForegroundColor Yellow
+    $scriptsDir = Join-Path $targetFolder "scripts"
+    $backendDir = Join-Path $targetFolder "backend"
+    $frontendDir = Join-Path $targetFolder "frontend"
+    New-Folder $scriptsDir
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/check-installed-modules.ps1" -OutFile (Join-Path $scriptsDir "check-installed-modules.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/setup-sampledata.ps1" -OutFile (Join-Path $scriptsDir "setup-sampledata.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/watch-url-up.ps1" -OutFile (Join-Path $scriptsDir "watch-url-up.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/docker-compose-helper.ps1" -OutFile (Join-Path $scriptsDir "docker-compose-helper.ps1") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/scripts/auth-helper.ps1" -OutFile (Join-Path $scriptsDir "auth-helper.ps1") -TimeoutSec $timeoutSec
+    Write-Host "... Scripts-helpers downloaded" -ForegroundColor Green
 
-# download config files for the backend
-Write-Host "Downloading config files for the backend..." -ForegroundColor Yellow
-New-Folder $backendDir
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/vc-docker/feat/net10/linux/platform/Dockerfile" -OutFile (Join-Path $backendDir "Dockerfile")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/vc-docker/feat/net10/linux/platform/wait-for-it.sh" -OutFile (Join-Path $backendDir "wait-for-it.sh")
-Write-Host "... Config files for the backend downloaded" -ForegroundColor Green
+    # download config files for the backend
+    Write-Host "Downloading config files for the backend..." -ForegroundColor Yellow
+    New-Folder $backendDir
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/vc-docker/feat/net10/linux/platform/Dockerfile" -OutFile (Join-Path $backendDir "Dockerfile") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/vc-docker/feat/net10/linux/platform/wait-for-it.sh" -OutFile (Join-Path $backendDir "wait-for-it.sh") -TimeoutSec $timeoutSec
+    Write-Host "... Config files for the backend downloaded" -ForegroundColor Green
 
-# download config files for the frontend
-Write-Host "Downloading config files for the frontend..." -ForegroundColor Yellow
-New-Folder $frontendDir
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/frontend/Dockerfile" -OutFile (Join-Path $frontendDir "Dockerfile")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/frontend/nginx.conf" -OutFile (Join-Path $frontendDir "nginx.conf")
-Write-Host "... Config files for the frontend downloaded" -ForegroundColor Green
+    # download config files for the frontend
+    Write-Host "Downloading config files for the frontend..." -ForegroundColor Yellow
+    New-Folder $frontendDir
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/frontend/Dockerfile" -OutFile (Join-Path $frontendDir "Dockerfile") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/frontend/nginx.conf" -OutFile (Join-Path $frontendDir "nginx.conf") -TimeoutSec $timeoutSec
+    Write-Host "... Config files for the frontend downloaded" -ForegroundColor Green
 
-# download docker-compose files (base + all provider overrides)
-Write-Host "Downloading docker-compose files..." -ForegroundColor Yellow
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.yml" -OutFile (Join-Path $targetFolder "docker-compose.yml")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.postgres.yml" -OutFile (Join-Path $targetFolder "docker-compose.postgres.yml")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.mysql.yml" -OutFile (Join-Path $targetFolder "docker-compose.mysql.yml")
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.sqlserver.yml" -OutFile (Join-Path $targetFolder "docker-compose.sqlserver.yml")
-Write-Host "... docker-compose files downloaded" -ForegroundColor Green
+    # download docker-compose files (base + all provider overrides)
+    Write-Host "Downloading docker-compose files..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.yml" -OutFile (Join-Path $targetFolder "docker-compose.yml") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.postgres.yml" -OutFile (Join-Path $targetFolder "docker-compose.postgres.yml") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.mysql.yml" -OutFile (Join-Path $targetFolder "docker-compose.mysql.yml") -TimeoutSec $timeoutSec
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/docker-compose.sqlserver.yml" -OutFile (Join-Path $targetFolder "docker-compose.sqlserver.yml") -TimeoutSec $timeoutSec
+    Write-Host "... docker-compose files downloaded" -ForegroundColor Green
+}
+finally {
+    $ProgressPreference = $savedProgressPreference   # restore, even if a download fails
+}
 
 Write-Host "File operation completed." -ForegroundColor Green
 
