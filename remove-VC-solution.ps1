@@ -41,6 +41,7 @@ $projectVolumes = @(
     "virto_mysql_data",
     "virto_mssql_data",
     "virto_cms-content-data",
+    "virto_assets-data",
     "virto_modules-data",
     "virto_esdata01",
     "virto_redisdata"

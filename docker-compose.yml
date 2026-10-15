@@ -114,6 +114,7 @@ services:
       - redis
     volumes:
       - cms-content-volume:/opt/virtocommerce/platform/wwwroot/cms-content
+      - assets-volume:/opt/virtocommerce/platform/wwwroot/assets
       - modules-volume:/opt/virtocommerce/platform/modules
     networks:
       - virto
@@ -122,6 +123,8 @@ services:
 volumes:
   cms-content-volume:
     name: virto_cms-content-data
+  assets-volume:
+    name: virto_assets-data
   modules-volume:
     name: virto_modules-data
   esdata01:

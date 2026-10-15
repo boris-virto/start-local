@@ -72,6 +72,7 @@ The following files and folders will be created:
 - `start-VC-solution.ps1`: Script to start a solution using built by `build-VC-solution.ps1` script
 - `stop-VC-solution.ps1`: Script stops VC solution but does NOT remove the volumes associated with the docker containers
 - `remove-VC-solution.ps1`: Script removes docker volumes associated with the containers, removes backend and frontend docker images from local docker storage
+- `update-VC-solution.ps1`: Script updates an installed solution to a new backend and frontend build and keeps its data (database, cms-content, uploaded assets, search index), see [Updating to a new version](#-updating-to-a-new-version-keeps-your-data)
 
 By default `build-VC-solution` script is executed automatically after the files are created and `start-VC-solution` script is executed automatically after the build is complete. However, the execution can be skipped.
 
@@ -164,6 +165,35 @@ ES_MEM_LIMIT=1g
 > [!IMPORTANT]
 > After changing the `.env` file, restart the services using `stop-VC-solution.ps1` and `start-VC-solution.ps1`
 
+
+## 🔄 Updating to a new version (keeps your data)
+
+`update-VC-solution.ps1` moves an installed, running solution to a new backend (platform + modules) and frontend build without losing its data. It takes the same `-vcSolutionVersion`, `-customPackagesJson` and `-customFrontendUrl` parameters as `build-VC-solution.ps1`:
+
+```pwsh
+.\VirtoLocal\update-VC-solution.ps1 -vcSolutionVersion custom -customPackagesJson .\my-packages.json
+```
+
+What it does:
+1. Reads the installed platform and module versions from the running platform container.
+2. Builds the new images while the old ones keep running. It stops before changing anything if the platform or any module would be downgraded, because database migrations only go forward (override with `-allowDowngrade $true`). The `latest-stable` bundle can be older than an install that was built with `edge` or `custom`.
+3. Stops only the platform and backs up the database (SQL Server: `BACKUP DATABASE`, checked with `RESTORE VERIFYONLY`; PostgreSQL: `pg_dump`; MySQL: `mysqldump`), cms-content and uploaded assets into `VirtoLocal/backups/update-<timestamp>/`, together with a `ROLLBACK.txt` for this exact update.
+4. Replaces the platform container and the `virto_modules-data` volume. Docker fills a named volume from the image only while the volume is empty, so the old volume would hide the new image's modules.
+5. Restarts the frontend (its nginx resolves the platform address only at start), waits for `/health` and reports every module that did not load.
+
+The database, Elasticsearch and Redis containers keep running throughout.
+
+Optional parameters:
+- `-skipFrontend $true` keeps the installed frontend. With `-vcSolutionVersion custom` and no `-customFrontendUrl` the installed frontend is kept too; unlike a fresh build, an update does not fall back to the latest `vc-frontend` release.
+- `-skipBackup $true` skips the database and cms-content backup. Uploaded assets that are not on a volume yet are still carried over.
+- `-backupFolder <path>` puts the backup somewhere else.
+
+> [!IMPORTANT]
+> Uploaded assets (`wwwroot/assets`: product and page images, order documents) now live in the `virto_assets-data` volume. Before, they lived in the platform container's own filesystem and were lost every time the container was recreated, including `stop-VC-solution.ps1` followed by `start-VC-solution.ps1`, since `stop` runs `docker compose down`.
+>
+> On an existing install, run `update-VC-solution.ps1` first after taking the new `docker-compose.yml`: it carries the assets over into the volume. Running `stop-VC-solution.ps1` or `start-VC-solution.ps1` first recreates the platform container with an empty assets volume.
+
+To roll an update back, follow `ROLLBACK.txt` in its backup folder. The previous images are kept as `vc-platform:pre-update-<timestamp>` and `vc-frontend:pre-update-<timestamp>`; the database has to be restored from the backup as well, because the new version has already migrated it.
 
 ## ⬆️ Upgrading from an earlier install
 

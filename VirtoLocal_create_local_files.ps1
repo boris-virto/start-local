@@ -89,6 +89,7 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-lo
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/start-VC-solution.ps1" -OutFile (Join-Path $targetFolder "start-VC-solution.ps1")
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/stop-VC-solution.ps1" -OutFile (Join-Path $targetFolder "stop-VC-solution.ps1")
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/remove-VC-solution.ps1" -OutFile (Join-Path $targetFolder "remove-VC-solution.ps1")
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/VirtoCommerce/start-local/refs/heads/$branch/update-VC-solution.ps1" -OutFile (Join-Path $targetFolder "update-VC-solution.ps1")
 Write-Host "... Management scripts downloaded" -ForegroundColor Green
 
 # download scripts-helpers
